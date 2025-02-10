@@ -190,6 +190,11 @@ func (sp *Sample) updateController() {
 		Owns(&appsv1.Deployment{}).`,
 	)
 	hackutils.CheckError("add reconcile implementation", err)
+
+	// Run goimports to fix formatting
+	cmd := exec.Command("goimports", "-w", filepath.Join(sp.ctx.Dir, "internal/controller/memcached_controller.go"))
+	err = cmd.Run()
+	hackutils.CheckError("format cronjob_webhook.go with goimports", err)
 }
 
 // Prepare the Context for the sample project
@@ -320,7 +325,7 @@ const controllerReconcileImplementation = `// Fetch the Memcached instance
 	}
 
 	// Let's just set the status as Unknown when no status is available
-	if memcached.Status.Conditions == nil || len(memcached.Status.Conditions) == 0 {
+	if len(memcached.Status.Conditions) == 0 {
 		meta.SetStatusCondition(&memcached.Status.Conditions, metav1.Condition{Type: typeAvailableMemcached, Status: metav1.ConditionUnknown, Reason: "Reconciling", Message: "Starting reconciliation"})
 		if err = r.Status().Update(ctx, memcached); err != nil {
 			log.Error(err, "Failed to update Memcached status")

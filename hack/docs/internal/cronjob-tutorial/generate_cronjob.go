@@ -286,6 +286,11 @@ func (sp *Sample) updateController() {
 		`// +kubebuilder:rbac:groups=batch.tutorial.kubebuilder.io,resources=cronjobs/finalizers,verbs=update`, controllerReconcile)
 	hackutils.CheckError("fixing cronjob_controller.go", err)
 
+	err = pluginutil.InsertCode(
+		filepath.Join(sp.ctx.Dir, "internal/controller/cronjob_controller.go"),
+		`// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.1/pkg/reconcile`, skipGoCycloLint)
+	hackutils.CheckError("fixing cronjob_controller.go", err)
+
 	err = pluginutil.ReplaceInFile(
 		filepath.Join(sp.ctx.Dir, "internal/controller/cronjob_controller.go"),
 		`	_ = log.FromContext(ctx)
@@ -397,6 +402,11 @@ func (sp *Sample) updateWebhookTests() {
 		webhookTestingValidatingTodoFragment,
 		webhookTestingValidatingExampleFragment)
 	hackutils.CheckError("replace validating defaulting test", err)
+
+	err = pluginutil.ReplaceInFile(file,
+		webhookTestsVars,
+		webhookTestsConstants)
+	hackutils.CheckError("replace before each webhook test ", err)
 
 	err = pluginutil.ReplaceInFile(file,
 		webhookTestsBeforeEachOriginal,
@@ -513,6 +523,11 @@ Then, we set up the webhook with the manager.
 		filepath.Join(sp.ctx.Dir, "internal/webhook/v1/cronjob_webhook.go"),
 		webhookValidateSpecMethods)
 	hackutils.CheckError("adding validation spec methods at the end", err)
+
+	// Run goimports to fix formatting
+	cmd := exec.Command("goimports", "-w", filepath.Join(sp.ctx.Dir, "internal/webhook/v1/cronjob_webhook.go"))
+	err = cmd.Run()
+	hackutils.CheckError("format cronjob_webhook.go with goimports", err)
 }
 
 func (sp *Sample) updateSuiteTest() {
